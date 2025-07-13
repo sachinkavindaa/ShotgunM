@@ -1,6 +1,6 @@
 #!/bin/sh
 #SBATCH --nodes=1
-#SBATCH --array=1-158%20 
+#SBATCH --array=1-81 
 #SBATCH --ntasks-per-node=8
 #SBATCH --time=24:00:00
 #SBATCH --mem=96gb
@@ -14,6 +14,7 @@
 # Load necessary modules
 module load bbmap
 module load sickle
+module load biodata
 
 # Directories
 INPUT_DIR="/work/samodha/sachin/ShotgunM/ibkset1"
@@ -26,7 +27,7 @@ BOVINE_REMOVED_DIR="$BASE_OUT/05_bovineremoval"
 SAMPLE_LIST="$INPUT_DIR/sample_list.txt"
 
 # Reference paths
-HUMAN_REF_DIR="/work/samodha/sachin/ShotgunM/human_index/hg38.fa"
+HUMAN_REF_DIR="/work/HCC/BCRF/Genomes/Homo_sapiens/UCSC/hg38/WholeGenomeFasta/genome.fa"
 BOVINE_REF_DIR="/work/samodha/sachin/ShotgunM/bovine_index/bosTau9.fa"
 
 # Create output directories
@@ -34,6 +35,12 @@ mkdir -p "$PHIX_REMOVED_DIR" "$REPAIR_DIR" "$TRIM_DIR" "$HUMAN_REMOVED_DIR" "$BO
 
 # Get current sample name
 SAMPLE=$(sed -n "${SLURM_ARRAY_TASK_ID}p" "$SAMPLE_LIST")
+
+# Check if SAMPLE is empty
+if [[ -z "$SAMPLE" ]]; then
+  echo "[ERROR] No sample found for SLURM_ARRAY_TASK_ID=$SLURM_ARRAY_TASK_ID"
+  exit 1
+fi
 
 # Raw input files
 FW_IN="${INPUT_DIR}/${SAMPLE}_1.fq.gz"

@@ -25,30 +25,26 @@ HUMAN_REMOVED_DIR="$BASE_OUT/04_humanremoval"
 BOVINE_REMOVED_DIR="$BASE_OUT/05_bovineremoval"
 SAMPLE_LIST="$INPUT_DIR/sample_list.txt"
 
-# Reference paths
-HUMAN_REF_DIR="/work/samodha/sachin/human_index/hg38.fa"
-BOVINE_REF_DIR="/work/samodha/sachin/bovine_indexfa/bosTau9.fa"
+# Reference files (must be FASTA files, not directories)
+HUMAN_REF="/work/samodha/sachin/human_index/hg38.fa"
+BOVINE_REF="/work/samodha/sachin/bovine_index/bosTau9.fa"
 
-# Verify reference files exist
+# Verify references exist
 if [ ! -f "$HUMAN_REF" ]; then
-    echo "Error: Human reference file $HUMAN_REF not found!"
+    echo "ERROR: Human reference file $HUMAN_REF not found!"
     exit 1
 fi
-
 if [ ! -f "$BOVINE_REF" ]; then
-    echo "Error: Bovine reference file $BOVINE_REF not found!"
+    echo "ERROR: Bovine reference file $BOVINE_REF not found!"
     exit 1
 fi
 
 # Create output directories
-mkdir -p "$PHIX_REMOVED_DIR" "$REPAIR_DIR" "$TRIM_DIR" "$HUMAN_REMOVED_DIR" "$BOVINE_REMOVED_DIR" "$BASE_OUT/logs"
+mkdir -p "$PHIX_REMOVED_DIR" "$REPAIR_DIR" "$TRIM_DIR" \
+         "$HUMAN_REMOVED_DIR" "$BOVINE_REMOVED_DIR" "$BASE_OUT/logs"
 
 # Get current sample name
 SAMPLE=$(sed -n "${SLURM_ARRAY_TASK_ID}p" "$SAMPLE_LIST")
-
-# Raw input files
-FW_IN="${INPUT_DIR}/${SAMPLE}_1.fq.gz"
-RV_IN="${INPUT_DIR}/${SAMPLE}_2.fq.gz"
 
 ########################
 # Step 1: Remove PhiX
@@ -56,8 +52,9 @@ RV_IN="${INPUT_DIR}/${SAMPLE}_2.fq.gz"
 FW_CLEAN="${PHIX_REMOVED_DIR}/phiX_removed_${SAMPLE}_1.fq.gz"
 RV_CLEAN="${PHIX_REMOVED_DIR}/phiX_removed_${SAMPLE}_2.fq.gz"
 
-bbduk.sh in="$FW_IN" out="$FW_CLEAN" k=31 ref=artifacts,phix ordered cardinality
-bbduk.sh in="$RV_IN" out="$RV_CLEAN" k=31 ref=artifacts,phix ordered cardinality
+bbduk.sh in="$INPUT_DIR/${SAMPLE}_1.fq.gz" out="$FW_CLEAN" \
+         in2="$INPUT_DIR/${SAMPLE}_2.fq.gz" out2="$RV_CLEAN" \
+         k=31 ref=artifacts,phix ordered cardinality
 echo "[$SAMPLE] PhiX removal done."
 
 ########################
@@ -66,7 +63,8 @@ echo "[$SAMPLE] PhiX removal done."
 FW_REPAIRED="${REPAIR_DIR}/${SAMPLE}_repaired_1.fq"
 RV_REPAIRED="${REPAIR_DIR}/${SAMPLE}_repaired_2.fq"
 
-repair.sh in1="$FW_CLEAN" in2="$RV_CLEAN" out1="$FW_REPAIRED" out2="$RV_REPAIRED"
+repair.sh in1="$FW_CLEAN" in2="$RV_CLEAN" \
+          out1="$FW_REPAIRED" out2="$RV_REPAIRED"
 echo "[$SAMPLE] Repair completed."
 
 ########################
@@ -76,37 +74,40 @@ FW_TRIMMED="${TRIM_DIR}/trimmed_${SAMPLE}_1.fq"
 RV_TRIMMED="${TRIM_DIR}/trimmed_${SAMPLE}_2.fq"
 SINGLETON="${TRIM_DIR}/trimmed_s_${SAMPLE}.fq"
 
-sickle pe -t sanger -f "$FW_REPAIRED" -r "$RV_REPAIRED" -o "$FW_TRIMMED" -p "$RV_TRIMMED" -s "$SINGLETON" -q 30 -l 75
+sickle pe -t sanger -f "$FW_REPAIRED" -r "$RV_REPAIRED" \
+          -o "$FW_TRIMMED" -p "$RV_TRIMMED" -s "$SINGLETON" \
+          -q 30 -l 75
 echo "[$SAMPLE] Trimming completed."
 
 ########################
 # Step 4: Human Host Removal
 ########################
-FW_NONHUMAN="${HUMAN_REMOVED_DIR}/nonhuman_${SAMPLE}_1.fq"
-RV_NONHUMAN="${HUMAN_REMOVED_DIR}/nonhuman_${SAMPLE}_2.fq"
+# First index the reference if needed
+if [ ! -f "${HUMAN_REF}.fai" ]; then
+    bbmap.sh ref="$HUMAN_REF"
+fi
 
-bbmap.sh in="$FW_TRIMMED" outu="$FW_NONHUMAN" ref="$HUMAN_REF_DIR" \
-  minid=0.95 maxindel=3 bwr=0.20 bw=12 quickmatch fast minhits=2 \
-  qtrim=rl trimq=10 untrim -Xmx23g
-
-bbmap.sh in="$RV_TRIMMED" outu="$RV_NONHUMAN" ref="$HUMAN_REF_DIR" \
-  minid=0.95 maxindel=3 bwr=0.20 bw=12 quickmatch fast minhits=2 \
-  qtrim=rl trimq=10 untrim -Xmx23g
-
+bbmap.sh in="$FW_TRIMMED" in2="$RV_TRIMMED" \
+         outu="$HUMAN_REMOVED_DIR/nonhuman_${SAMPLE}#.fq" \
+         ref="$HUMAN_REF" \
+         minid=0.95 maxindel=3 bwr=0.20 bw=12 \
+         quickmatch fast minhits=2 \
+         qtrim=rl trimq=10 untrim -Xmx23g
 echo "[$SAMPLE] Human host removal completed."
 
 ########################
 # Step 5: Bovine Host Removal
 ########################
-FW_NOBOVINE="${BOVINE_REMOVED_DIR}/nobovine_${SAMPLE}_1.fq"
-RV_NOBOVINE="${BOVINE_REMOVED_DIR}/nobovine_${SAMPLE}_2.fq"
+# First index the reference if needed
+if [ ! -f "${BOVINE_REF}.fai" ]; then
+    bbmap.sh ref="$BOVINE_REF"
+fi
 
-bbmap.sh in="$FW_NONHUMAN" outu="$FW_NOBOVINE" ref="$BOVINE_REF_DIR" \
-  minid=0.95 maxindel=3 bwr=0.20 bw=12 quickmatch fast minhits=2 \
-  qtrim=rl trimq=10 untrim -Xmx23g
-
-bbmap.sh in="$RV_NONHUMAN" outu="$RV_NOBOVINE" ref="$BOVINE_REF_DIR" \
-  minid=0.95 maxindel=3 bwr=0.20 bw=12 quickmatch fast minhits=2 \
-  qtrim=rl trimq=10 untrim -Xmx23g
-
+bbmap.sh in="$HUMAN_REMOVED_DIR/nonhuman_${SAMPLE}_1.fq" \
+         in2="$HUMAN_REMOVED_DIR/nonhuman_${SAMPLE}_2.fq" \
+         outu="$BOVINE_REMOVED_DIR/nobovine_${SAMPLE}#.fq" \
+         ref="$BOVINE_REF" \
+         minid=0.95 maxindel=3 bwr=0.20 bw=12 \
+         quickmatch fast minhits=2 \
+         qtrim=rl trimq=10 untrim -Xmx23g
 echo "[$SAMPLE] Bovine host removal completed."
