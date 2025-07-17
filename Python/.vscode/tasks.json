@@ -1,0 +1,12 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run hello.py",
+            "type": "shell",
+            "command": "python hello.py",
+            "group": "build",
+            "problemMatcher": []
+        }
+    ]
+}
