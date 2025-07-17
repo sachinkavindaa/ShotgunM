@@ -1,21 +1,22 @@
-# Python Script Project with Jupyter Support
-
-This project is a simple Python script setup with Jupyter notebook support.
-
-## Getting Started
-
-1. Open this folder in VS Code.
-2. Install the Python and Jupyter extensions if prompted.
-3. Create or open `.ipynb` files to use Jupyter notebooks.
-4. Run `hello.py` to see a simple Hello World example.
+# Shotgun Python Analysis Project
 
 ## Project Structure
-- `hello.py`: Example Python script.
-- `.github/copilot-instructions.md`: Copilot custom instructions.
 
-## Requirements
-- Python 3.x
-- VS Code Python extension
-- (Optional) Jupyter extension for notebook support
+- `Analysis.ipynb` — Main Jupyter notebook for data analysis and visualization.
+- `hello.py` — Example Python script.
+- `mappingfile.csv` — (Ignored in git) Data file for analysis. Not included in the repository.
+- `Figures/` — Folder for saving plots and figures (e.g., `HvI.png`).
+- `.github/copilot-instructions.md` — Custom Copilot instructions for this workspace.
+- `.vscode/` — VS Code settings and tasks.
+- `README.md` — Project documentation (this file).
 
----
+## Usage
+
+1. Clone the repository.
+2. Add your own `mappingfile.csv` to the project root (not tracked by git).
+3. Open `Analysis.ipynb` in VS Code or Jupyter and run the cells to perform analysis.
+4. Figures and plots will be saved in the `Figures/` directory.
+
+## Notes
+- The `mappingfile.csv` file is required for analysis but is not included in the repository. Please provide your own data file.
+- All dependencies should be installed in your Python environment (see notebook for details).
