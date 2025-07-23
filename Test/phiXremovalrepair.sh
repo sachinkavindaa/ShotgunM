@@ -53,3 +53,6 @@ fi
 echo "Total reads after repair: $total_reads"
 echo "Samples processed: $sample_count"
 echo "Average reads per sample: $avg_reads"
+
+
+#this is teest 
