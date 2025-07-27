@@ -111,3 +111,6 @@ bbmap.sh in="$HUMAN_REMOVED_DIR/nonhuman_${SAMPLE}_1.fq" \
          quickmatch fast minhits=2 \
          qtrim=rl trimq=10 untrim -Xmx23g
 echo "[$SAMPLE] Bovine host removal completed."
+
+
+#test
