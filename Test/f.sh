@@ -113,4 +113,4 @@ bbmap.sh in="$HUMAN_REMOVED_DIR/nonhuman_${SAMPLE}_1.fq" \
 echo "[$SAMPLE] Bovine host removal completed."
 
 
-#test
+#test h
