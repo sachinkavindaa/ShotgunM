@@ -16,7 +16,7 @@ set -euo pipefail
 WORKDIR="/work/samodha/sachin/ShotgunM/Test_output_without_repair/map_to_ORFs/idxstats"
 IN="${WORKDIR}/ORF_counts.filtered.tsv"
 OUT="${WORKDIR}/ORF_counts.filtered.cpm.tsv"
-CHUNKSIZE=100000     # lines per chunk
+CHUNKSIZE=100000     # lines per chunks
 # ---------------------------------------------
 
 module purge
