@@ -14,7 +14,7 @@ set -euo pipefail
 shopt -s nullglob
 
 # ========= CONFIGURE THESE IF NEEDED =========
-# Directory containing *_coasm_ORFs.idxstats.txt files:
+# Directory containing *_coasm_ORFs.idxstats.txt file:
 IDXDIR="/work/samodha/sachin/ShotgunM/Test_output_without_repair/map_to_ORFs/idxstats"
 # Output file:
 OUT="${IDXDIR}/ORF_counts.tsv"
